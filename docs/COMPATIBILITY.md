@@ -1,7 +1,9 @@
 # Compatibility and inherited limitations
 
-The baseline preserves Bluejay v0.21.0 source, defaults, EEPROM layout, bootloader
-identity, protocol behavior and HEX images. It adds no new DShot commands and
+The active source is a Compasless refactor derived from Bluejay v0.21.0. The
+instruction/data stream, defaults, EEPROM layout, bootloader identity and protocol
+behavior are preserved by an all-branch source equivalence check. The immutable
+upstream source and original HEX images remain available as references. It adds no new DShot commands and
 requires no change to the existing SROT board, RP2350, flasher or Bondor code.
 
 The ESC flasher is a separate ESP32 firmware. This repository's HEX files execute

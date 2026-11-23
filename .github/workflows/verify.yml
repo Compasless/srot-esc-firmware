@@ -22,6 +22,8 @@ jobs:
           python-version: "3.11"
       - name: Verify untouched upstream source
         run: python tools/verify_source.py
+      - name: Verify active Compasless firmware across all target branches
+        run: python tools/verify_firmware.py --report build/source-equivalence.json
       - name: Exercise firmware integrity and hardware-target checks
         run: python -m unittest discover -s tests -v
       - name: Verify upstream sample from each supported MCU family

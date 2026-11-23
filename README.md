@@ -1,98 +1,92 @@
-# SROT ESC Firmware
+# SROT ESC — Compasless
 
-**The ESC firmware component of the Compasless SROT AUV/ROV suite.**
+**ESC firmware for the Compasless SROT AUV/ROV suite.**
 
-Compasless maintains this repository's release packaging, target verification, build
-tooling and underwater-thruster integration notes. The firmware engine is
-**[Bluejay](https://github.com/bird-sanctuary/bluejay) v0.21.0**, derived upstream
-from BLHeli_S. Its source, copyright notices, defaults, identifiers and executable
-behavior are preserved.
+The active firmware is in **[src/](src)**, starting at
+**[src/SrotEsc.asm](src/SrotEsc.asm)**. This is a behavior-preserving firmware source
+refactor derived from Bluejay v0.21.0: Compasless maintains the application
+composition, module boundaries, namespaced routines/state and build integration.
+The build compiles this active source tree.
 
-| Baseline | Status |
+Bluejay and BLHeli_S retain their original authorship and copyright. Their notices
+are preserved, and an unchanged upstream snapshot remains in `vendor/bluejay` for
+comparison. See [UPSTREAM.md](UPSTREAM.md) and [COPYING](COPYING).
+
+## Firmware architecture
+
+| Active source | Responsibility |
 |---|---|
-| Upstream release | [Bluejay v0.21.0](https://github.com/bird-sanctuary/bluejay/releases/tag/v0.21.0) |
-| Pinned source | `93bf3e1a081ee87357aface06e535480dcc191d8` |
-| Hardware variants | 1,008 H/BB21 and X/BB51 layout/deadtime/PWM combinations |
-| Compasless firmware changes | None in the reference baseline |
-| Source rebuild | Requires locally licensed Keil AX51/LX51/Ohx51 tools |
-| Thruster performance / hardware qualification | Not measured or established by this package |
+| [src/SrotEsc.asm](src/SrotEsc.asm) | Composition root and assembly order |
+| [src/core](src/core) | Reset initialization, scheduler and instruction helpers |
+| [src/control](src/control) | Arming, startup, commutation, timing, reversal and stopping |
+| [src/protocol](src/protocol) | DShot acquisition, decoding and RPM/extended telemetry |
+| [src/drivers](src/drivers) | FET power stage, beeper and LED routines |
+| [src/hal](src/hal) | Target selection, register definitions and ESC pin layouts |
+| [src/config](src/config) | Target constants, defaults and configuration decoding |
+| [src/memory](src/memory) | Fixed RAM, stack and flash address maps |
+| [src/storage](src/storage) | EEPROM image and settings persistence |
+| [src/interrupts](src/interrupts) | Interrupt handlers and timer service |
+| [src/boot](src/boot) | Reset jump and preserved serial bootloader |
 
-**3D mode qualification is outstanding.** Upstream v0.21.0 reports performance
-issues in forward/reverse 3D mode and advises against using that mode. SROT's
-existing propulsion path uses forward/reverse operation, so these reference
-artifacts are not a qualified replacement for an installed thruster configuration.
-See [compatibility and known issues](docs/COMPATIBILITY.md).
+The refactor reorganizes the former main source into 12 units and namespaces 535
+code/data labels. There are 60 active source files. Instructions, literal data,
+default settings, memory allocation and assembly order are preserved.
+[Architecture and invariants](docs/ARCHITECTURE.md) explains the implementation.
 
-## Download and select firmware
-
-The [reference release](https://github.com/Compasless/srot-esc-firmware/releases/tag/v0.1.0-reference)
-contains the unchanged upstream HEX files, SHA-256 checksums, license and provenance.
-The archive is a Compasless distribution of upstream binaries, not evidence of a
-fresh source compilation or improved thrust.
-
-Read the actual ESC's layout, MCU and deadtime using
-[srot-esc-flasher](https://github.com/Compasless/srot-esc-flasher). Then select the
-exact matching filename. The build tools provide no default hardware target.
-The examples below use `A_H_5_48` only to demonstrate the commands.
+## Verify and build
 
 ```console
-python tools/verify_source.py
+python tools/verify_firmware.py
+python -m unittest discover -s tests -v
+python tools/build.py --target YOUR_LAYOUT_MCU_DEADTIME_PWM --keil-bin PATH_TO_C51_BIN
+```
+
+The source verifier expands every include and checks all conditional assembly
+branches against the upstream baseline after reversing the documented label map.
+It compares 13,644 assembly statements, including instruction order, constants and
+data. Deliberate runtime edits cause verification to fail.
+
+A fresh compilation uses licensed Keil AX51/LX51/Ohx51 tools and must additionally
+match the selected upstream target's flash bytes. Source equivalence and a fresh
+binary build are separate checks; no fresh compilation or water test is claimed
+when it has not run. See [BUILD.md](docs/BUILD.md).
+
+Select the exact layout, MCU, deadtime and PWM read from the actual ESC:
+
+```console
 python tools/reference.py list
 python tools/reference.py fetch --target A_H_5_48
-python tools/reference.py verify --target A_H_5_48 --file .cache/reference/A_H_5_48_v0.21.0.hex
 ```
 
-The original filenames and internal Bluejay identifiers remain intact so the
-existing configurator and SROT flasher can recognize the correct hardware.
-Do not override the detected MCU layout. See [target selection](docs/TARGETS.md).
+`A_H_5_48` is an example, not a recommended/default target. Original HEX filenames,
+EEPROM identity and DShot behavior remain compatible with the existing flasher.
+See [target selection](docs/TARGETS.md).
 
-## Build from source
+## Working here with four repositories
 
-Use a licensed Keil C51 installation. Python 3.11 or newer is sufficient for the
-Compasless tooling; no Python packages are required.
+Your existing local workbench can expose all four independent Git checkouts under
+`repos/`. Edits there change their actual checkouts; no file copying is required.
+The central manager supports status, fetch-all, fast-forward pull and an explicit
+single-repository push. See [WORKSPACE.md](WORKSPACE.md).
 
-```powershell
-$env:KEIL_C51_BIN = 'C:\Keil_v5\C51\BIN'
-python tools/build.py --target A_H_5_48
-```
-
-This assembles an isolated source copy, links it and generates Intel HEX. A build
-is accepted only if its flash bytes equal the matching upstream reference.
-On Linux, add `--wine` and provide the licensed Windows tool directory.
-See [build and verification](docs/BUILD.md).
-
-## The four connected repositories
-
-| Repository | Responsibility |
+| Repository | Role |
 |---|---|
 | [srot-control-board](https://github.com/Compasless/srot-control-board) | Hengla vehicle control and RP2350 DShot/RPM co-processor |
-| [srot-ground-station](https://github.com/Compasless/srot-ground-station) | Bondor operator tools and LoRa bridge |
-| [srot-esc-flasher](https://github.com/Compasless/srot-esc-flasher) | ESP32 bench tool that reads, configures and flashes ESCs |
-| **srot-esc-firmware** | Bluejay reference source, ESC images, build verification and qualification records |
+| [srot-ground-station](https://github.com/Compasless/srot-ground-station) | Bondor and the LoRa bridge |
+| [srot-esc-flasher](https://github.com/Compasless/srot-esc-flasher) | Bench flashing and ESC diagnostics |
+| **srot-esc-firmware** | Active ESC firmware source and its build/verification tools |
 
-Open [srot.code-workspace](srot.code-workspace) to work with the four sibling
-checkouts. [WORKSPACE.md](WORKSPACE.md) describes their maintenance boundary.
-Adding this fourth component makes no changes to the other three repositories.
+The other three repositories' firmware is unchanged by this refactor.
 
-## Repository layout
+## Compatibility and release status
 
-```text
-vendor/bluejay/              unchanged upstream release source, Makefile and license
-provenance/                 file hashes and release asset identity
-tools/                      Compasless build, selection, integrity and workspace tools
-tests/                      integrity and target-selection checks
-docs/                       build, compatibility, targets and maintenance notes
-upstream.lock.json          exact release and source commit
-workspace.json              the four SROT repositories
-```
+The inherited [Bluejay v0.21.0 3D-mode limitation](https://github.com/bird-sanctuary/bluejay/releases/tag/v0.21.0)
+still applies. Preserving behavior also preserves that limitation; no improved
+thrust, efficiency or reversal performance is claimed.
+[COMPATIBILITY.md](docs/COMPATIBILITY.md) and
+[QUALIFICATION.md](docs/QUALIFICATION.md) record what requires hardware testing.
 
-## Credit and license
-
-Bluejay and BLHeli_S authors retain their source copyright and authorship. All
-upstream notices are preserved in [vendor/bluejay](vendor/bluejay); the original
-README is [available here](vendor/bluejay/README.md). See [UPSTREAM.md](UPSTREAM.md)
-for provenance and the scope of Compasless contributions.
-
-Firmware and this repository's integration tooling are distributed under
-**GPL-3.0-or-later**; see [COPYING](COPYING). Keil's proprietary toolchain is not
-included and must be licensed separately.
+The earlier [v0.1.0 reference package](https://github.com/Compasless/srot-esc-firmware/releases/tag/v0.1.0-reference)
+contains 1,008 upstream HEX files with checksums. Those remain identified as
+upstream downloads. Source-refactor releases are distinct from fresh compiled
+firmware and qualified hardware releases.

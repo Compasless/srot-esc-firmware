@@ -1,11 +1,21 @@
 {
-  "firmware_variants_verified": 1008,
+  "active_firmware": {
+    "active_entry": "src/SrotEsc.asm",
+    "active_source_files": 60,
+    "assembly_statements_compared": 13644,
+    "canonical_assembly_sha256": "9cefa73e206e953b2c56cdabbe738c18cc1fbba8f668a846cae0e741af30788c",
+    "coverage": "all conditional assembly branches, including all 1008 published target configurations",
+    "hardware_tested": false,
+    "instructions_data_defaults_and_conditionals": "equivalent",
+    "original_source_files": 48,
+    "renamed_code_and_data_labels": 535,
+    "source_rebuilt": false
+  },
   "hardware_tested": false,
-  "intel_hex_validation": "all records, checksums, address overlaps and EOF verified",
   "performance_improvement_claimed": false,
-  "reference_origin": "upstream release downloads",
-  "source_files_verified": 71,
+  "reference_firmware_variants_verified": 1008,
   "source_rebuilt": false,
-  "unit_tests_passed": 19,
-  "validation_date": "2026-11-23"
+  "unit_tests_passed": 27,
+  "upstream_source_files_verified": 71,
+  "validation_date": "2026-11-24"
 }

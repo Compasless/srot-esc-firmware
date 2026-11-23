@@ -1,0 +1,12 @@
+{
+  "active_entry": "src/SrotEsc.asm",
+  "active_source_files": 60,
+  "assembly_statements_compared": 13644,
+  "canonical_assembly_sha256": "9cefa73e206e953b2c56cdabbe738c18cc1fbba8f668a846cae0e741af30788c",
+  "coverage": "all conditional assembly branches, including all 1008 published target configurations",
+  "hardware_tested": false,
+  "instructions_data_defaults_and_conditionals": "equivalent",
+  "original_source_files": 48,
+  "renamed_code_and_data_labels": 535,
+  "source_rebuilt": false
+}

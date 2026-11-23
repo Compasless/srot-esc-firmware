@@ -17,11 +17,15 @@ Skaug, alongside the contributors to their projects. Bluejay descends from
 [mathiasvr/bluejay](https://github.com/mathiasvr/bluejay) project. Preserve the
 original per-file notices and [COPYING](COPYING) when redistributing.
 
-Compasless authored the surrounding SROT integration documentation, Python build
-and validation tools, release manifests and four-repository workspace setup.
+Compasless maintains the active src/ firmware architecture: the composition
+root, 12 main-program units, responsibility-based module layout and 535 namespaced
+code/data labels. Compasless also authored the SROT integration documentation,
+Python build/validation tools, manifests and four-repository workspace setup.
 Compasless does not claim original authorship of Bluejay's control algorithms.
 
-The reference release makes no firmware source or default-setting changes.
+The initial reference release made no source changes. Version 0.2 reorganizes
+and refactors active firmware source while preserving instruction/data semantics,
+ordering and default settings, checked against the immutable upstream snapshot.
 Original HEX filenames, firmware signatures and configuration layouts are
 preserved. Downloaded release binaries are distinguished from source-rebuilt
 artifacts by their verification reports.

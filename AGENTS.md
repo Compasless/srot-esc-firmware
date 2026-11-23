@@ -3,9 +3,11 @@
 This is the fourth Compasless SROT repository. Read README.md, UPSTREAM.md,
 upstream.lock.json and docs/COMPATIBILITY.md before changing its artifacts.
 
-The user requires the three existing repositories to remain untouched during this
-baseline import. All new source packaging, tools, docs and workspace files belong
-here. Do not edit, commit, flash or push changes to the siblings as part of this task.
+The user requires the three existing repositories' firmware to remain untouched.
+Active firmware source is maintained in src/, starting at src/SrotEsc.asm. The
+vendor/bluejay tree remains an immutable reference. Compile src/, not the snapshot.
+Local workbench links and Git tools may expose all four existing checkouts without
+copying or changing sibling firmware. Do not flash hardware as part of this task.
 
 ## Firmware provenance
 
@@ -13,7 +15,8 @@ here. Do not edit, commit, flash or push changes to the siblings as part of this
   copyright notices, authorship and COPYING. Run tools/verify_source.py.
 - Record a deliberate upstream update with its tag, commit, source manifest and
   binary manifest together. Never replace a locked hash to disguise a local edit.
-- Compasless owns this integration layer; Bluejay remains the upstream engine.
+- Compasless maintains the active source refactor and integration; credit Bluejay
+  and BLHeli_S as the upstream algorithm/source lineage.
   State measured behavior and performance evidence accurately.
 - Distinguish downloaded upstream binaries, source-rebuilt bytes and hardware-
   qualified artifacts. A reference package is not a water-tested optimization.
@@ -28,6 +31,8 @@ here. Do not edit, commit, flash or push changes to the siblings as part of this
 - Never flash hardware from a test, CI workflow or packaging command.
 - Keep Keil licensed separately. Do not publish tool binaries, keys or license files.
 - Builds run serially because upstream warns about AX51's shared temporary state.
+- Run tools/verify_firmware.py on active source. Runtime statements, defaults and
+  data must remain equivalent after reversing the documented namespace mapping.
 - A claimed unchanged rebuild must match upstream flash bytes and pass HEX checks.
 
 ## Shared protocol guarantees

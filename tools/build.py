@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Compasless contributors
-"""Build unmodified Bluejay source with a locally licensed Keil C51 toolchain."""
+"""Build the active Compasless SROT ESC assembly source with licensed Keil tools."""
 from pathlib import Path
 import argparse
 import json
@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 
 from srot import ROOT, fetch_reference, image_info, lock, parse_hex, save_json, select_target, sha256, verify_source
+from firmware_equivalence import verify as verify_firmware
 
 
 def build_plan(target, keil_bin, wine=False):
@@ -24,7 +25,7 @@ def build_plan(target, keil_bin, wine=False):
         path = str(Path(keil_bin) / name)
         return ["wine", path] if wine else [path]
     return filename, record, [
-        exe("AX51.exe") + ["src/Bluejay.asm",
+        exe("AX51.exe") + ["src/SrotEsc.asm",
             *[f"DEFINE({key}={value})" for key,value in defines.items()],
             "OBJECT(firmware.OBJ)", "PRINT(firmware.LST)",
             "NOMOD51", "REGISTERBANK(0,1,2)", "NOLIST", "NOSYMBOLS"],
@@ -43,6 +44,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     verify_source()
+    verify_firmware()
     filename, record, commands = build_plan(args.target, args.keil_bin or "<KEIL_C51_BIN>", args.wine)
     if args.dry_run:
         print(json.dumps({"target":record, "commands":commands, "source_rebuilt":False}, indent=2))
@@ -54,7 +56,7 @@ def main():
             parser.error(f"Tool not found: {Path(args.keil_bin) / tool}")
     args.output.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix="srot-" + record["target"] + "-", dir=args.output))
-    shutil.copytree(ROOT / lock()["source_directory"] / "src", work / "src")
+    shutil.copytree(ROOT / "src", work / "src")
     # Serial execution matches upstream: AX51 shares temporary state across invocations.
     for index, command in enumerate(commands):
         result = subprocess.run(command, cwd=work, capture_output=True)
@@ -79,10 +81,12 @@ def main():
     save_json(args.output / (record["target"] + "-build.json"), {
         "target":record["target"], "upstream_commit":lock()["commit"],
         "source_rebuilt":True, "flash_bytes_match_upstream":True,
+        "active_entry":"src/SrotEsc.asm",
         "file_sha256":sha256(rebuilt), **image_info(rebuilt),
         "hardware_tested":False, "commands":commands,
     })
     verify_source()
+    verify_firmware()
     print("Source build verified against upstream flash bytes: " + str(target))
 
 

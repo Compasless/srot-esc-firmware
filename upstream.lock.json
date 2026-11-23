@@ -8,10 +8,16 @@
   "asset_count": 1008,
   "source_directory": "vendor/bluejay",
   "license": "GPL-3.0-or-later",
-  "source_changes": [],
-  "firmware_behavior": "unchanged",
+  "source_changes": [
+    "responsibility-based module architecture",
+    "12 ordered main-program units",
+    "535 namespaced code/data labels"
+  ],
+  "firmware_behavior": "preserved by all-branch source equivalence; fresh compilation not yet performed",
   "hardware_qualification": "not performed",
   "known_issues": [
     "Upstream reports performance issues in 3D mode and advises against its use in v0.21.0."
-  ]
+  ],
+  "active_source_directory": "src",
+  "active_entry": "src/SrotEsc.asm"
 }

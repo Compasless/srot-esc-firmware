@@ -1,7 +1,7 @@
 # Build and verification
 
-The firmware snapshot uses Keil AX51, LX51 and Ohx51, as specified by the unchanged
-upstream Makefile. The reference download package contains upstream release
+The active firmware uses Keil AX51, LX51 and Ohx51. tools/build.py compiles
+src/SrotEsc.asm and the active src/ tree, rather than vendor/bluejay. The reference download package contains upstream release
 binaries; it does not claim they were freshly assembled in this workspace.
 
 ## Requirements
@@ -20,7 +20,7 @@ Toolchain downloads, licenses and activation remain separate from this GPL sourc
 
 1. Obtain the layout/MCU/deadtime from the actual ESC through the existing flasher.
 2. Select an exact supported target with `python tools/reference.py list`.
-3. Run `python tools/verify_source.py`.
+3. Run `python tools/verify_firmware.py` to check the active source against the preserved baseline.
 4. Set `KEIL_C51_BIN` or pass `--keil-bin`.
 5. Run `python tools/build.py --target YOUR_TARGET`.
 
@@ -38,6 +38,7 @@ download never sets those fields to true.
 
 ```console
 python tools/verify_source.py
+python tools/verify_firmware.py
 python -m unittest discover -s tests -v
 python tools/build.py --target A_H_5_48 --dry-run
 ```

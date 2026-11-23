@@ -1,0 +1,9 @@
+{
+  "organization": "Compasless",
+  "repositories": [
+    {"name": "srot-control-board", "path": "repos/srot-control-board", "url": "https://github.com/Compasless/srot-control-board.git"},
+    {"name": "srot-ground-station", "path": "repos/srot-ground-station", "url": "https://github.com/Compasless/srot-ground-station.git"},
+    {"name": "srot-esc-flasher", "path": "repos/srot-esc-flasher", "url": "https://github.com/Compasless/srot-esc-flasher.git"},
+    {"name": "srot-esc-firmware", "path": "repos/srot-esc-firmware", "url": "https://github.com/Compasless/srot-esc-firmware.git"}
+  ]
+}

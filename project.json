@@ -1,0 +1,9 @@
+{
+  "name": "SROT ESC",
+  "publisher": "Compasless",
+  "version": "0.2.0",
+  "firmware_entry": "src/SrotEsc.asm",
+  "architecture": "8051/EFM8 assembly; behavior-preserving Bluejay-derived source refactor",
+  "source_rebuilt": false,
+  "hardware_qualified": false
+}

@@ -1,0 +1,10 @@
+{
+  "folders": [
+    {"name": "SROT local workbench", "path": "."},
+    {"name": "srot-control-board", "path": "repos/srot-control-board"},
+    {"name": "srot-ground-station", "path": "repos/srot-ground-station"},
+    {"name": "srot-esc-flasher", "path": "repos/srot-esc-flasher"},
+    {"name": "srot-esc-firmware", "path": "repos/srot-esc-firmware"}
+  ],
+  "settings": {}
+}
