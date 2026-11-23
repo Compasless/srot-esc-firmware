@@ -1,0 +1,3 @@
+* text=auto eol=lf
+vendor/bluejay/** -text -whitespace
+COPYING -text -whitespace

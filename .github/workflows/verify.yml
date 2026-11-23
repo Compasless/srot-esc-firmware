@@ -1,0 +1,32 @@
+name: Verify source and firmware integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+      - name: Verify untouched upstream source
+        run: python tools/verify_source.py
+      - name: Exercise firmware integrity and hardware-target checks
+        run: python -m unittest discover -s tests -v
+      - name: Verify upstream sample from each supported MCU family
+        run: |
+          python tools/reference.py fetch --target A_H_5_48
+          python tools/reference.py fetch --target A_X_5_24
+      - name: Inspect build commands without a licensed toolchain
+        run: python tools/build.py --target A_H_5_48 --dry-run

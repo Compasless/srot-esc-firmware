@@ -1,0 +1,17 @@
+{
+  "repository": "bird-sanctuary/bluejay",
+  "url": "https://github.com/bird-sanctuary/bluejay",
+  "tag": "v0.21.0",
+  "commit": "93bf3e1a081ee87357aface06e535480dcc191d8",
+  "release_id": 166295169,
+  "release_url": "https://github.com/bird-sanctuary/bluejay/releases/tag/v0.21.0",
+  "asset_count": 1008,
+  "source_directory": "vendor/bluejay",
+  "license": "GPL-3.0-or-later",
+  "source_changes": [],
+  "firmware_behavior": "unchanged",
+  "hardware_qualification": "not performed",
+  "known_issues": [
+    "Upstream reports performance issues in 3D mode and advises against its use in v0.21.0."
+  ]
+}

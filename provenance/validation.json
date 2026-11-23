@@ -1,0 +1,11 @@
+{
+  "firmware_variants_verified": 1008,
+  "hardware_tested": false,
+  "intel_hex_validation": "all records, checksums, address overlaps and EOF verified",
+  "performance_improvement_claimed": false,
+  "reference_origin": "upstream release downloads",
+  "source_files_verified": 71,
+  "source_rebuilt": false,
+  "unit_tests_passed": 19,
+  "validation_date": "2026-11-23"
+}
