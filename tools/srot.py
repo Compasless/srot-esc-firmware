@@ -1,52 +1,39 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Compasless contributors
-"""Source and firmware integrity helpers for the SROT Bluejay reference package."""
+"""Hardware-target selection and Intel HEX integrity for Compasless SROT ESC."""
 from pathlib import Path
-from urllib.request import Request, urlopen
 import hashlib
 import json
 import struct
-import time
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
-def read_json(path):
-    return Path(path).read_text(encoding="utf-8")
-
-
-def lock():
-    return json.loads(read_json(ROOT / "upstream.lock.json"))
-
-
-def assets():
-    return json.loads(read_json(ROOT / "provenance/release-assets.json"))
-
-
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
-
 
 def save_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
+def assets():
+    config = json.loads((ROOT / "targets.json").read_text())
+    version = json.loads((ROOT / "project.json").read_text())["version"]
+    result = {}
+    for mcu, layouts in config["families"].items():
+        for layout in layouts:
+            for deadtime in config["deadtime"]:
+                for pwm in config["pwm_khz"]:
+                    target = f"{layout}_{mcu}_{deadtime}_{pwm}"
+                    filename = f"SROT_{target}_v{version}.hex"
+                    result[filename] = dict(target=target, layout=layout, mcu=mcu, deadtime=deadtime, pwm_khz=pwm)
+    return result
 
-def verify_source():
-    manifest = json.loads(read_json(ROOT / "provenance/source-manifest.json"))
-    source = ROOT / lock()["source_directory"]
-    found = {p.relative_to(source).as_posix() for p in source.rglob("*") if p.is_file()}
-    if found != set(manifest):
-        raise ValueError(f"Upstream file set changed: missing={set(manifest)-found}, extra={found-set(manifest)}")
-    for relative, record in manifest.items():
-        data = (source / relative).read_bytes()
-        if len(data) != record["size"] or sha256(data) != record["sha256"]:
-            raise ValueError("Upstream source differs from the pinned release: " + relative)
-    if (ROOT / "COPYING").read_bytes() != (source / "COPYING").read_bytes():
-        raise ValueError("Root COPYING differs from upstream license")
-    return len(manifest)
-
+def select_target(target):
+    for filename, record in assets().items():
+        if target in (record["target"], filename):
+            return filename, record
+    raise ValueError(f"Unsupported target {target!r}. Use python tools/build.py --list. Match the detected layout, MCU and deadtime.")
 
 def parse_hex(data):
     """Read Intel HEX with length, checksum, EOF and overlap validation."""
@@ -113,49 +100,3 @@ def image_info(data):
         "last_address": max(memory),
         "image_sha256": image_digest(memory),
     }
-
-
-def select_target(target):
-    for filename, record in assets().items():
-        if target == record["target"] or target == filename:
-            return filename, record
-    raise ValueError(
-        f"Unsupported target {target!r}. Use tools/reference.py list. "
-        "Read the actual ESC layout, MCU and deadtime; do not guess or override MCU layout."
-    )
-
-
-def verify_reference(path, record):
-    data = Path(path).read_bytes()
-    if len(data) != record["size"] or sha256(data) != record["sha256"]:
-        raise ValueError("Reference firmware SHA-256/size mismatch: " + str(path))
-    info = image_info(data)
-    if record.get("image_sha256") and info["image_sha256"] != record["image_sha256"]:
-        raise ValueError("Reference flash image digest mismatch: " + str(path))
-    return info
-
-
-def fetch_reference(target, directory):
-    filename, record = select_target(target)
-    directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / filename
-    if path.exists():
-        verify_reference(path, record)
-        return path
-    for attempt in range(3):
-        try:
-            request = Request(record["url"], headers={"User-Agent":"Compasless-SROT-reference/0.1"})
-            with urlopen(request, timeout=45) as response:
-                data = response.read()
-            if len(data) != record["size"] or sha256(data) != record["sha256"]:
-                raise ValueError("Downloaded upstream asset does not match release manifest")
-            image_info(data)
-            temporary = path.with_suffix(".hex.partial")
-            temporary.write_bytes(data)
-            temporary.replace(path)
-            return path
-        except (OSError, TimeoutError):
-            if attempt == 2:
-                raise
-            time.sleep(attempt + 1)

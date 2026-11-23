@@ -1,94 +1,122 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Compasless contributors
-"""Build the active Compasless SROT ESC assembly source with licensed Keil tools."""
+"""Compile Compasless SROT ESC firmware from src/ using ASEM-51."""
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import argparse
 import json
-import os
-import shutil
 import subprocess
-import tempfile
+import zipfile
+from assembler import assemble
+from bootstrap import ARCHIVE_SHA256, ensure_assembler
+from srot import ROOT, assets, image_digest, image_info, parse_hex, save_json, select_target, sha256
 
-from srot import ROOT, fetch_reference, image_info, lock, parse_hex, save_json, select_target, sha256, verify_source
-from firmware_equivalence import verify as verify_firmware
-
-
-def build_plan(target, keil_bin, wine=False):
+def build_plan(target):
     filename, record = select_target(target)
-    layout = record["layout"]
-    escno = 27 if layout == "OA" else ord(layout) - ord("A") + 1
     defines = {
-        "ESCNO": escno, "MCU_TYPE": {"H":1, "X":2}[record["mcu"]],
-        "DEADTIME": record["deadtime"], "PWM_FREQ": {24:0,48:1,96:2}[record["pwm_khz"]],
+        "ESCNO": 27 if record["layout"] == "OA" else ord(record["layout"]) - 64,
+        "MCU_TYPE": {"H":1, "X":2}[record["mcu"]],
+        "DEADTIME": record["deadtime"],
+        "PWM_FREQ": {24:0, 48:1, 96:2}[record["pwm_khz"]],
     }
-    def exe(name):
-        path = str(Path(keil_bin) / name)
-        return ["wine", path] if wine else [path]
-    return filename, record, [
-        exe("AX51.exe") + ["src/SrotEsc.asm",
-            *[f"DEFINE({key}={value})" for key,value in defines.items()],
-            "OBJECT(firmware.OBJ)", "PRINT(firmware.LST)",
-            "NOMOD51", "REGISTERBANK(0,1,2)", "NOLIST", "NOSYMBOLS"],
-        exe("LX51.exe") + ["firmware.OBJ", "TO", "firmware.OMF"],
-        exe("Ohx51.exe") + ["firmware.OMF", "HEXFILE(firmware.hex)"],
-    ]
+    return filename, record, defines
 
+def verify_image(data, record):
+    memory = parse_hex(data)
+    eeprom = 0x3000 if record["mcu"] == "X" else 0x1A00
+    def read(address, length):
+        return bytes(memory[address + offset] for offset in range(length))
+    if read(eeprom, 3) != bytes([0, 3, 208]):
+        raise ValueError("Firmware revision or EEPROM layout differs")
+    if read(eeprom + 11, 1) != b"\x03":
+        raise ValueError("Reversible thruster default is missing")
+    if read(eeprom + 0x60, 16) != b"Compasless (.0) ":
+        raise ValueError("Compasless runtime identity is missing")
+    if b"Bluejay" in bytes(memory[address] for address in sorted(memory)):
+        raise ValueError("Unexpected upstream runtime identity")
+    expected = "#" + record["layout"] + "_" + record["mcu"] + "_" + f'{record["deadtime"]:02d}' + "#"
+    if read(eeprom + 0x40, 16).decode("ascii").strip() != expected:
+        raise ValueError("Compiled hardware-layout tag does not match selected target")
+    # An independent baseline fingerprint catches compiler and firmware changes
+    # outside this release's declared identity, version and direction changes.
+    baseline = json.loads((ROOT / "tests/fixtures/compiler-baseline.json").read_text())[record["target"]]
+    for address, expected in ((baseline["direction_address"], 3), (baseline["revision_address"], 3)):
+        if memory[address] != expected:
+            raise ValueError("Unexpected runtime default/revision instruction")
+    restored = memory.copy()
+    restored[eeprom + 1] = 21
+    restored[eeprom + 11] = 1
+    restored[baseline["direction_address"]] = 1
+    restored[baseline["revision_address"]] = 21
+    for index, value in enumerate(b"Bluejay (.0)    "):
+        restored[eeprom + 0x60 + index] = value
+    if image_digest(restored) != baseline["image_sha256"]:
+        raise ValueError("Flash changed beyond the declared firmware modifications")
+    return image_info(data)
+
+def compile_target(target, executable, output):
+    filename, record, defines = build_plan(target)
+    result = assemble(ROOT / "src", "SrotEsc.asm", defines, executable, output / "work" / target)
+    data = result.read_bytes()
+    info = verify_image(data, record)
+    destination = output / "hex" / filename
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(data)
+    return {"filename":filename, **record, "sha256":sha256(data), **info}
+
+def package(output, records):
+    version = json.loads((ROOT / "project.json").read_text())["version"]
+    checksums = "\n".join(item["sha256"] + "  hex/" + item["filename"] for item in records) + "\n"
+    (output / "SHA256SUMS").write_text(checksums, encoding="ascii", newline="\n")
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=normal"], cwd=ROOT, text=True).strip())
+    source = {p.relative_to(ROOT).as_posix():sha256(p.read_bytes()) for p in sorted((ROOT / "src").rglob("*")) if p.is_file()}
+    tool_sources = {p.relative_to(ROOT).as_posix():sha256(p.read_bytes()) for p in sorted((ROOT / "tools").glob("*.py"))}
+    save_json(output / "build-manifest.json", {
+        "firmware":"Compasless SROT ESC", "version":version, "source_built":True,
+        "hardware_qualified":False, "source_commit":commit, "source_dirty":dirty,
+        "source_files":source, "build_tools":tool_sources,
+        "assembler":"ASEM-51 1.3", "assembler_archive_sha256":ARCHIVE_SHA256, "targets":records})
+    archive = output / ("Compasless-SROT-ESC-v" + version + ".zip")
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
+        for path in [output/"SHA256SUMS", output/"build-manifest.json",
+                     *[output/"hex"/item["filename"] for item in records]]:
+            info = zipfile.ZipInfo(path.relative_to(output).as_posix(), date_time=(2026,11,24,0,0,0))
+            info.compress_type=zipfile.ZIP_DEFLATED
+            bundle.writestr(info, path.read_bytes())
+    print("Source-built firmware package: " + str(archive), flush=True)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--target", required=True, help="Exact target from tools/reference.py list")
-    parser.add_argument("--keil-bin", default=os.environ.get("KEIL_C51_BIN"))
-    parser.add_argument("--wine", action="store_true", help="Run licensed Windows tools through Wine")
-    parser.add_argument("--output", type=Path, default=ROOT / "build")
-    parser.add_argument("--reference-directory", type=Path, default=ROOT / ".cache/reference")
-    parser.add_argument("--dry-run", action="store_true")
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--target", help="Exact layout_MCU_deadtime_PWM, e.g. A_H_5_48")
+    selection.add_argument("--all", action="store_true")
+    selection.add_argument("--list", action="store_true")
+    parser.add_argument("--assembler", type=Path, help="Optional original ASEMW.EXE path")
+    parser.add_argument("--output", type=Path, default=ROOT/"build")
+    parser.add_argument("--jobs", type=int, default=4)
     args = parser.parse_args()
-    verify_source()
-    verify_firmware()
-    filename, record, commands = build_plan(args.target, args.keil_bin or "<KEIL_C51_BIN>", args.wine)
-    if args.dry_run:
-        print(json.dumps({"target":record, "commands":commands, "source_rebuilt":False}, indent=2))
+    if args.list:
+        print("\n".join(record["target"] for record in assets().values()))
         return
-    if not args.keil_bin:
-        parser.error("Set --keil-bin or KEIL_C51_BIN to your licensed AX51/LX51/Ohx51 installation")
-    for tool in ("AX51.exe", "LX51.exe", "Ohx51.exe"):
-        if not (Path(args.keil_bin) / tool).is_file():
-            parser.error(f"Tool not found: {Path(args.keil_bin) / tool}")
-    args.output.mkdir(parents=True, exist_ok=True)
-    work = Path(tempfile.mkdtemp(prefix="srot-" + record["target"] + "-", dir=args.output))
-    shutil.copytree(ROOT / "src", work / "src")
-    # Serial execution matches upstream: AX51 shares temporary state across invocations.
-    for index, command in enumerate(commands):
-        result = subprocess.run(command, cwd=work, capture_output=True)
-        (work / f"step-{index+1}.log").write_bytes(result.stdout + result.stderr)
-        allowed = (0,1) if index == 1 else (0,)
-        if result.returncode not in allowed:
-            raise RuntimeError(f"Keil step {index+1} failed ({result.returncode}); see {work}")
-        if index == 1:
-            maps = list(work.glob("*.MAP"))
-            if len(maps) != 1 or "1 WARNING" not in maps[0].read_text(errors="replace"):
-                raise RuntimeError("Linker warning count differs from upstream's expected one warning")
-    generated = work / "firmware.hex"
-    if not generated.is_file():
-        raise RuntimeError("Toolchain produced no Intel HEX output")
-    reference = fetch_reference(args.target, args.reference_directory)
-    rebuilt = generated.read_bytes()
-    if parse_hex(rebuilt) != parse_hex(reference.read_bytes()):
-        raise RuntimeError("Rebuilt flash bytes differ from the pinned upstream target; output is not verified")
-    target = args.output / "hex" / filename
-    target.parent.mkdir(exist_ok=True)
-    target.write_bytes(rebuilt)
-    save_json(args.output / (record["target"] + "-build.json"), {
-        "target":record["target"], "upstream_commit":lock()["commit"],
-        "source_rebuilt":True, "flash_bytes_match_upstream":True,
-        "active_entry":"src/SrotEsc.asm",
-        "file_sha256":sha256(rebuilt), **image_info(rebuilt),
-        "hardware_tested":False, "commands":commands,
-    })
-    verify_source()
-    verify_firmware()
-    print("Source build verified against upstream flash bytes: " + str(target))
-
+    if args.jobs < 1:
+        parser.error("--jobs must be positive")
+    targets = [args.target] if args.target else [record["target"] for record in assets().values()]
+    for target in targets:
+        select_target(target)
+    executable = args.assembler or ensure_assembler()
+    if not executable.is_file():
+        parser.error("ASEMW.EXE not found")
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    records=[]
+    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        futures={pool.submit(compile_target, target, executable, output):target for target in targets}
+        for future in as_completed(futures):
+            records.append(future.result())
+            if len(records) % 100 == 0:
+                print(f"Built and checked {len(records)}/{len(targets)} targets", flush=True)
+    package(output, sorted(records, key=lambda record:record["filename"]))
 
 if __name__ == "__main__":
     main()

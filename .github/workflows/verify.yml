@@ -1,16 +1,14 @@
-name: Verify source and firmware integrity
-
+name: Verify Compasless firmware
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  verify:
+  tests:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -20,15 +18,22 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.11"
-      - name: Verify untouched upstream source
-        run: python tools/verify_source.py
-      - name: Verify active Compasless firmware across all target branches
-        run: python tools/verify_firmware.py --report build/source-equivalence.json
-      - name: Exercise firmware integrity and hardware-target checks
-        run: python -m unittest discover -s tests -v
-      - name: Verify upstream sample from each supported MCU family
-        run: |
-          python tools/reference.py fetch --target A_H_5_48
-          python tools/reference.py fetch --target A_X_5_24
-      - name: Inspect build commands without a licensed toolchain
-        run: python tools/build.py --target A_H_5_48 --dry-run
+      - run: python -m unittest discover -s tests -v
+  compile:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+      - name: Compile and check all separate hardware targets
+        run: python tools/build.py --all --output build/release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Compasless-SROT-ESC
+          path: |
+            build/release/Compasless-SROT-ESC-v*.zip
+            build/release/SHA256SUMS
+            build/release/build-manifest.json
+          if-no-files-found: error
+          retention-days: 30

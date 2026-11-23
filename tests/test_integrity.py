@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from srot import assets, image_digest, parse_hex, select_target, sha256, verify_reference
+from srot import assets, image_digest, parse_hex, select_target
 from build import build_plan
 
 
@@ -73,18 +73,6 @@ class IntelHexTests(unittest.TestCase):
         second = parse_hex("\n".join([record(1, 0, b"\x02"), record(0, 0, b"\x01"), EOF]))
         self.assertEqual(image_digest(first), image_digest(second))
 
-    def test_reference_file_fingerprint_is_enforced(self):
-        data = (record(0, 0, b"\x01") + "\n" + EOF + "\n").encode()
-        expected = {"size":len(data), "sha256":sha256(data)}
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / "test.hex"
-            path.write_bytes(data)
-            self.assertEqual(verify_reference(path, expected)["flash_bytes"], 1)
-            path.write_bytes(data.replace(b"01FE", b"02FD"))
-            with self.assertRaisesRegex(ValueError, "SHA-256"):
-                verify_reference(path, expected)
-
-
 class TargetTests(unittest.TestCase):
     def test_release_manifest_has_exact_unique_targets(self):
         records = assets()
@@ -94,7 +82,7 @@ class TargetTests(unittest.TestCase):
 
     def test_exact_target_and_filename_resolve_to_same_record(self):
         filename, info = select_target("A_H_5_48")
-        self.assertEqual(filename, "A_H_5_48_v0.21.0.hex")
+        self.assertEqual(filename, "SROT_A_H_5_48_v0.3.0.hex")
         self.assertEqual(select_target(filename), (filename, info))
 
     def test_nonexistent_layout_or_family_is_rejected(self):
@@ -103,15 +91,14 @@ class TargetTests(unittest.TestCase):
                 select_target(target)
 
     def test_multi_letter_layout_uses_upstream_numeric_code(self):
-        _,_,commands = build_plan("OA_H_5_48", "C:/Keil_v5/C51/BIN")
-        self.assertIn("DEFINE(ESCNO=27)", commands[0])
-        self.assertIn("DEFINE(PWM_FREQ=1)", commands[0])
+        _,_,defines = build_plan("OA_H_5_48")
+        self.assertEqual(defines["ESCNO"], 27)
+        self.assertEqual(defines["PWM_FREQ"], 1)
 
     def test_bb51_build_uses_correct_mcu_define(self):
-        _,_,commands = build_plan("A_X_5_24", "C:/Keil_v5/C51/BIN")
-        self.assertIn("DEFINE(MCU_TYPE=2)", commands[0])
-        self.assertIn("DEFINE(PWM_FREQ=0)", commands[0])
-        self.assertEqual(len(commands), 3)
+        _,_,defines = build_plan("A_X_5_24")
+        self.assertEqual(defines["MCU_TYPE"], 2)
+        self.assertEqual(defines["PWM_FREQ"], 0)
 
 
 if __name__ == "__main__":

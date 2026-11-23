@@ -1,0 +1,19 @@
+Compasless SROT ESC firmware
+Modifications Copyright (C) 2026 Compasless contributors
+Modified 2026-11-24: module architecture, namespaced labels, firmware identity,
+firmware revision, bidirectional default and build tooling.
+
+Derived from Bluejay v0.21.0:
+https://github.com/bird-sanctuary/bluejay
+Commit 93bf3e1a081ee87357aface06e535480dcc191d8
+Bluejay is derived from BLHeli_S by Steffen Skaug.
+
+Original copyright/copyleft notices remain in the corresponding source files,
+including Mathias Rasmussen, Steffen Skaug, Daniel Mosquera and Chris Landa.
+Silicon Laboratories register-definition notices are preserved separately in full.
+The firmware is distributed under GPL version 3 or later; see COPYING.
+
+ASEM-51 1.3 is a separate tool by W.W. Heinz, downloaded from
+https://plit.de/asem-51/asem5113.zip in its complete, unchanged distribution.
+Its executable is not part of this repository or firmware release.
+Its original license accompanies the locally downloaded distribution.

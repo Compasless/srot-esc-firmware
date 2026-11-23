@@ -1,11 +1,9 @@
 ; Compasless SROT ESC firmware
-; Preserved BLHeli serial bootloader and flash protocol.
-; Source architecture/refactor Copyright (C) 2026 Compasless contributors.
-; Derived from Bluejay v0.21.0; original notices are preserved below.
 ; SPDX-License-Identifier: GPL-3.0-or-later
-; Original source: BLHeliBootLoad.inc
-;
+; Copyright (C) 2026 Compasless contributors
 
+; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ;

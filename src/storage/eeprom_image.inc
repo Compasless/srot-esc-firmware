@@ -1,36 +1,13 @@
 ; Compasless SROT ESC firmware
-; EEPROM image, configurator identity and startup melody.
-; Source architecture/refactor Copyright (C) 2026 Compasless contributors.
-; Derived from Bluejay v0.21.0; original notices are preserved below.
 ; SPDX-License-Identifier: GPL-3.0-or-later
-; Original source: Bluejay.asm
-;
-;**** **** **** **** **** **** **** **** **** **** **** **** ****
-;
-; Bluejay digital ESC firmware for controlling brushless motors in multirotors
-;
+; Copyright (C) 2026 Compasless contributors
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
+; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
+
 ;
-; This file is part of Bluejay.
-;
-; Bluejay is free software: you can redistribute it and/or modify
-; it under the terms of the GNU General Public License as published by
-; the Free Software Foundation, either version 3 of the License, or
-; (at your option) any later version.
-;
-; Bluejay is distributed in the hope that it will be useful,
-; but WITHOUT ANY WARRANTY; without even the implied warranty of
-; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-; GNU General Public License for more details.
-;
-; You should have received a copy of the GNU General Public License
-; along with Bluejay.  If not, see <http://www.gnu.org/licenses/>.
-;
-;**** **** **** **** **** **** **** **** **** **** **** **** ****
-;
-; Bluejay is a fork of BLHeli_S <https://github.com/bitdump/BLHeli> by Steffen Skaug.
 ;
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
@@ -39,7 +16,7 @@
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 CSEG AT CSEG_EEPROM
 EEPROM_FW_MAIN_REVISION EQU 0           ; Main revision of the firmware
-EEPROM_FW_SUB_REVISION EQU 21           ; Sub revision of the firmware
+EEPROM_FW_SUB_REVISION EQU 3            ; Sub revision of the firmware
 EEPROM_LAYOUT_REVISION EQU 208          ; Revision of the EEPROM layout
 EEPROM_B2_PARAMETERS_COUNT EQU 28       ; Number of parameters
 
@@ -90,7 +67,7 @@ Srot_eep_pgm_safety_arm: DB DEFAULT_PGM_SAFETY_ARM ; Various flag settings: bit 
 
 Srot_eep_dummy: DB 0FFh                      ; EEPROM address for safety reason
 CSEG AT CSEG_NAME
-Srot_eep_name: DB "Bluejay (.0)    "         ; Name tag (16 Bytes)
+Srot_eep_name: DB "Compasless (.0) "         ; Name tag (16 Bytes)
 
 CSEG AT CSEG_MELODY
 Srot_eep_pgm_beep_melody: DB 2,58,4,32,52,66,13,0,69,45,13,0,52,66,13,0,78,39,211,0,69,45,208,25,52,25,0

@@ -1,51 +1,35 @@
 # AGENTS.md — srot-esc-firmware
 
-This is the fourth Compasless SROT repository. Read README.md, UPSTREAM.md,
-upstream.lock.json and docs/COMPATIBILITY.md before changing its artifacts.
+This is Compasless SROT ESC firmware. Read README.md, docs/BUILD.md and
+docs/COMPATIBILITY.md. Active source starts at src/SrotEsc.asm.
 
-The user requires the three existing repositories' firmware to remain untouched.
-Active firmware source is maintained in src/, starting at src/SrotEsc.asm. The
-vendor/bluejay tree remains an immutable reference. Compile src/, not the snapshot.
-Local workbench links and Git tools may expose all four existing checkouts without
-copying or changing sibling firmware. Do not flash hardware as part of this task.
+The three existing SROT repositories must stay unchanged for this task.
+Workspace links expose their canonical checkouts without copying firmware.
+Never flash hardware from an automated build, test or packaging command.
 
-## Firmware provenance
+Preserve COPYING and original author notices. Keep upstream credit in README.md
+and NOTICE. Compasless identity is intentional; do not restore upstream branding
+as the runtime firmware name. Describe changes and hardware evidence accurately.
 
-- Keep vendor/bluejay byte-identical to the pinned upstream release. Preserve all
-  copyright notices, authorship and COPYING. Run tools/verify_source.py.
-- Record a deliberate upstream update with its tag, commit, source manifest and
-  binary manifest together. Never replace a locked hash to disguise a local edit.
-- Compasless maintains the active source refactor and integration; credit Bluejay
-  and BLHeli_S as the upstream algorithm/source lineage.
-  State measured behavior and performance evidence accurately.
-- Distinguish downloaded upstream binaries, source-rebuilt bytes and hardware-
-  qualified artifacts. A reference package is not a water-tested optimization.
-- Retain the upstream 3D-mode warning until an actual validated fix supersedes it.
+Use the exact detected layout, MCU, deadtime and selected PWM target. Do not guess
+from a board being 4-in-1. Preserve pin polarity, deadtime, EEPROM layout, bootloader
+and DShot encoding. Bidirectional default is an intentional AUV development change.
+Keep the inherited 3D-mode limitation visible until a validated fix supersedes it.
 
-## Hardware and build rules
+Build with tools/build.py. The ASEM-51 package is fetched unchanged with a pinned
+hash; do not distribute modified assembler binaries or licensing material.
+Targets have isolated build directories and may be assembled concurrently.
+The baseline fingerprints allow only documented identity/revision/direction
+changes; a future algorithm change needs a documented validation update.
 
-- Match the exact layout, MCU, deadtime and PWM target. No guessed default target.
-- Never bypass the configurator's hardware-layout checks.
-- Never change gate-drive polarity, deadtime, EEPROM layout, DShot encoding,
-  bootloader identity or motor defaults as a branding exercise.
-- Never flash hardware from a test, CI workflow or packaging command.
-- Keep Keil licensed separately. Do not publish tool binaries, keys or license files.
-- Builds run serially because upstream warns about AX51's shared temporary state.
-- Run tools/verify_firmware.py on active source. Runtime statements, defaults and
-  data must remain equivalent after reversing the documented namespace mapping.
-- A claimed unchanged rebuild must match upstream flash bytes and pass HEX checks.
+Run Python unit tests and actual representative source builds after tool changes.
+Before a release, build all targets and retain checksums/build manifest.
+A compiled image is not evidence of hardware qualification or improved thrust.
 
-## Shared protocol guarantees
-
-The other repositories own the runtime wire contract. This packaging does not change:
-MAV_CMD_SROT_MOVE=31000; movement type ordering; FlightMode integers;
+The other repositories own the runtime wire contract:
+MAV_CMD_SROT_MOVE=31000; movement ordering; FlightMode integers;
 PCA_RELAY_BASE_CH=8; MAVLINK_BAUD=115200; GCS_FAILSAFE_MS=5000; negative underwater
-VFR_HUD.alt; input freshness; or the terminal-ACK contract. No NVS defaults version bump.
+VFR_HUD.alt; input freshness; terminal ACK guarantees. No NVS version changes.
 
-## Workspace and commits
-
-workspace.json and srot.code-workspace connect all four repositories without
-modifying their contents. tools/check_workspace.py is read-only.
-
-Use the configured human author identity. Preserve upstream credit and do not add
-AI co-author trailers. Documentation and validation evidence accompany changes.
+Use the configured human Git author. Preserve history and author credit.
+Do not add AI co-author trailers.

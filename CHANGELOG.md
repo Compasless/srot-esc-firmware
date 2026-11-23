@@ -1,21 +1,16 @@
-# SROT ESC changes
+# Changelog
 
-## 0.2.0 — active Compasless firmware source refactor
+## 0.3.0 — 2026-11-24
 
-- Added src/SrotEsc.asm as the active compiler entry.
-- Reorganized firmware into 60 source files by core, control, protocol, driver,
-  hardware, memory, settings, storage, interrupts and boot responsibilities.
-- Split the previous main program into 12 ordered units.
-- Namespaced 535 code/data labels without changing instruction/data ordering.
-- Added all-branch source equivalence checks and mutation tests.
-- Pointed the build at the active source; retained the original source as reference.
-- Added a central four-repository Git manager for the existing local workbench.
+- Compasless runtime firmware identity and revision.
+- Bidirectional direction default for reversible thruster development.
+- Actual source-built HEX releases, with separate images for 1,008 targets.
+- Native Windows build using an original frontend and ASEM-51.
+- All original targets validated byte-for-byte before the declared firmware changes.
+- Baseline flash checks restrict changes to name, revision and direction.
+- Removed duplicate vendor source, reference-only packaging and Keil-only workflow.
+- Retained complete active source, original copyright notices, license and credit.
+- Development prerelease: hardware qualification and inherited 3D-mode issue remain.
 
-Behavior/defaults/protocols are preserved. Fresh compilation and hardware
-qualification are recorded separately and must not be implied by source checks.
-
-## 0.1.0-reference — upstream reference import
-
-Imported unmodified Bluejay v0.21.0 source and all 1,008 release assets with hashes,
-license, packaging and build wrappers. This was a reference distribution, not a
-firmware source rewrite.
+Earlier releases contained upstream reference binaries or a source refactor without
+fresh compiled Compasless firmware. The 0.3.0 release supersedes those artifacts.

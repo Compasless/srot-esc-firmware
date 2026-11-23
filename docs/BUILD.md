@@ -1,47 +1,42 @@
-# Build and verification
+# Building SROT ESC
 
-The active firmware uses Keil AX51, LX51 and Ohx51. tools/build.py compiles
-src/SrotEsc.asm and the active src/ tree, rather than vendor/bluejay. The reference download package contains upstream release
-binaries; it does not claim they were freshly assembled in this workspace.
+Use native Windows and Python 3.11 or later. The verified assembler is ASEM-51 1.3,
+downloaded as the complete original distribution from its author's site.
+Its ZIP SHA-256 is
+`2ae4bd6cd66e568951e479f62da8934771d963fccb8630cf2929b5dfaa7fc6a9`.
+The package and original license remain under `.cache/asem51/` and are not shipped
+as Compasless source.
 
-## Requirements
-
-- Python 3.11 or newer.
-- An appropriately licensed Keil C51 toolchain containing all three executables.
-- Native Windows, or Wine on Linux.
-- Network access to fetch a hash-locked upstream reference, unless cached.
-
-Keil's evaluation tools have a 2 KB object-code limit. The reference firmware is
-larger than that limit. Use a licensed toolchain; Silicon Labs provides a
-[free licensing route for its 8-bit MCUs](https://www.silabs.com/software-and-tools/keil-pk51).
-Toolchain downloads, licenses and activation remain separate from this GPL source.
-
-## Procedure
-
-1. Obtain the layout/MCU/deadtime from the actual ESC through the existing flasher.
-2. Select an exact supported target with `python tools/reference.py list`.
-3. Run `python tools/verify_firmware.py` to check the active source against the preserved baseline.
-4. Set `KEIL_C51_BIN` or pass `--keil-bin`.
-5. Run `python tools/build.py --target YOUR_TARGET`.
-
-Use `--dry-run` to inspect the target's defines and commands without executing tools.
-The wrapper copies source into a new build work directory, assembles serially,
-retains logs and compares every generated flash byte with the upstream target.
-The expected linker warning count is checked against the upstream build rule.
-No compiler is silently downloaded and no hardware is flashed.
-
-The output is written under `build/hex`. A successful build report records
-`source_rebuilt=true` and `flash_bytes_match_upstream=true`. A dry run or upstream
-download never sets those fields to true.
-
-## Offline checks
-
-```console
-python tools/verify_source.py
-python tools/verify_firmware.py
+```powershell
 python -m unittest discover -s tests -v
-python tools/build.py --target A_H_5_48 --dry-run
+python tools/build.py --list
+python tools/build.py --target A_H_5_48
+python tools/build.py --all --output build/release
 ```
 
-The example target demonstrates syntax. It does not identify your ESC.
-Local tests establish source/artifact integrity, not motor performance or safety.
+An original local executable can be selected with `--assembler PATH/ASEMW.EXE`.
+The automatic download verifies the complete archive and executable.
+Python checks also run on Linux; the native compilation path is verified on Windows.
+
+The Compasless frontend expands includes, conditional branches, macro-local labels,
+wide integer expressions and layout overrides. It emits standard MCS-51 assembly.
+The assembler driver relaxes calls/jumps until addresses stabilize. Each target
+has its own working directory. Compilation uses the active `src/` tree.
+
+Outputs include:
+
+- `hex/SROT_<layout>_<MCU>_<deadtime>_<PWM>_v0.3.0.hex`
+- `SHA256SUMS` and `build-manifest.json`
+- `Compasless-SROT-ESC-v0.3.0.zip`
+- Per-target assembler input, listing and log under `work/`
+
+The manifest records source commit, working-tree state, source/tool hashes,
+toolchain pin, target configuration and flash/file SHA-256 values.
+Release builds must use a clean committed tree.
+
+Before changing identity/defaults, this toolchain compiled all 1,008 original
+targets to byte-for-byte identical flash images. Every Compasless output is checked
+against those independent baseline fingerprints after reversing only the declared
+name, revision and direction changes. Gate-drive code, protection, bootloader,
+layout tags and DShot behavior must still match. HEX length/checksum/EOF checks
+also run; these are software checks, not motor or water testing.
