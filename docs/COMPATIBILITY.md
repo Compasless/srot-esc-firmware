@@ -57,8 +57,8 @@ and the 84 deadtime-120 targets display UNKNOWN. Both remain locally flashable.
 The tested public JavaScript asset is main.8a9bda3f.js (checked 2026-11-25). Its
 application sources and layout definitions match pinned ESC Configurator 0.32.1.
 The tests simulate the 4-way wire protocol, flash memory and readback; physical
-hardware qualification remains pending. See configurator/README.md and
-configurator/tests/stock-compatibility-results.json for scope and evidence.
+hardware qualification remains pending. See https://github.com/Compasless/srot-esc-configurator and its
+tests/stock-compatibility-results.json for scope and evidence.
 
 The SROT flasher repository and its passthrough firmware are unchanged.
 

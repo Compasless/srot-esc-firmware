@@ -23,10 +23,10 @@ that issue remains unresolved. See [compatibility and qualification](docs/COMPAT
 
 ## ESC Configurator
 
-[Open the Compasless configurator](https://compasless-srot-esc-configurator.plainlatte33.chatgpt.site)
+[Open the Compasless configurator](https://compasless.github.io/srot-esc-configurator/)
 for the existing SROT USB flasher: scan four ESC channels, flash a matching image,
 and read or edit Compasless settings with 3D fixed.
-[Source and local setup](configurator/README.md).
+[Source and local setup](https://github.com/Compasless/srot-esc-configurator).
 
 For the public site, download and extract the release ZIP, choose **Flash →
 Select File Locally**, and select the exact matching HEX. Keep **Ignore MCU layout**
@@ -51,7 +51,7 @@ No licensed Keil installation is required.
 
 The release ZIP contains separate `SROT_<target>_v0.4.0.hex` images, checksums and
 a source/build manifest. Code starts at [src/SrotEsc.asm](src/SrotEsc.asm).
-[WORKSPACE.md](WORKSPACE.md) explains how the four independent SROT repositories
+[WORKSPACE.md](WORKSPACE.md) explains how the five independent SROT repositories
 are managed from one local workbench.
 
 ## Credits and license

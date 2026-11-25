@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Compasless contributors
-"""Manage four independent Git repositories from one local workbench."""
+"""Manage five independent Git repositories from one local workbench."""
 from pathlib import Path
 import argparse
 import json

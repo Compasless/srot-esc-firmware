@@ -1,4 +1,4 @@
-"""Run the four-repository Git manager from the current SROT workbench."""
+"""Run the five-repository Git manager from the current SROT workbench."""
 from pathlib import Path
 import runpy
 import sys

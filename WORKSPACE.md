@@ -1,4 +1,4 @@
-# Four-repository SROT workspace
+# Five-repository SROT workspace
 
 Keep these sibling checkouts in the same parent directory:
 
@@ -11,7 +11,7 @@ srot-repos/
 ```
 
 Open `srot-esc-firmware/srot.code-workspace` in VS Code. The workspace file lives in
-this fourth repository and includes the other three through relative paths.
+this firmware repository and includes the other four through relative paths.
 
 ```console
 python tools/check_workspace.py --require-all
@@ -31,9 +31,9 @@ branches, runtime protocols, ESC settings and firmware behavior remain as they w
 
 ## Existing combined local workbench
 
-The local workbench can keep its existing root and expose the four canonical Git
+The local workbench can keep its existing root and expose the five canonical Git
 checkouts through repos/ directory junctions. Its SROT.code-workspace and
-srot-workspace.json point to those four live views.
+srot-workspace.json point to those five live views.
 
 From that workbench:
 
@@ -52,3 +52,5 @@ To recreate the local links and helper files on Windows, run in PowerShell 7:
 
 The setup tool preserves existing files and refuses mismatched paths/content.
 It never moves, deletes or copies firmware between repositories.
+
+The standalone browser interface is maintained in srot-esc-configurator.

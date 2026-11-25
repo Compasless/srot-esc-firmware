@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $workbenchPath = (Resolve-Path -LiteralPath $WorkbenchRoot).Path
 $repositoryPath = (Resolve-Path -LiteralPath $RepositoryParent).Path
-$names = 'srot-control-board','srot-ground-station','srot-esc-flasher','srot-esc-firmware'
+$names = 'srot-control-board','srot-ground-station','srot-esc-flasher','srot-esc-firmware','srot-esc-configurator'
 foreach ($name in $names) {
     if (-not (Test-Path -LiteralPath (Join-Path $repositoryPath "$name\.git"))) {
         throw "Missing repository: $name"
@@ -41,4 +41,4 @@ Get-ChildItem -LiteralPath $templates -Recurse -File | ForEach-Object {
         Copy-Item -LiteralPath $_.FullName -Destination $destination
     }
 }
-Write-Output "Workbench linked to four independent repositories: $workbenchPath"
+Write-Output "Workbench linked to five independent repositories: $workbenchPath"

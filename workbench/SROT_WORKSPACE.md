@@ -1,6 +1,6 @@
-# Working here with four independent repositories
+# Working here with five independent repositories
 
-This folder is the local workbench. The four Git checkouts are visible inside
+This folder is the local workbench. The five Git checkouts are visible inside
 `repos/`, through directory junctions to the existing sibling `srot-repos` folder.
 These are live views of the existing repositories, not duplicate copies.
 
@@ -22,7 +22,7 @@ python tools/srot_repos.py pull
 python tools/srot_repos.py push --repo srot-esc-firmware
 ```
 
-Fetch updates all four remote-tracking histories without replacing working files.
+Fetch updates all five remote-tracking histories without replacing working files.
 Pull requires clean working trees and fast-forwards only. Push requires one
 explicit repository and a clean working tree; commit changes in that checkout first.
 The tool never copies one repository's files over another, force-pushes or flashes.

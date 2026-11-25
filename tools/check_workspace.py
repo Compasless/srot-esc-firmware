@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Compasless contributors
-"""Inspect the four sibling repositories without changing them."""
+"""Inspect the five sibling repositories without changing them."""
 import argparse
 import json
 import subprocess

@@ -1,9 +1,25 @@
 {
   "folders": [
-    {"name": "srot-control-board", "path": "../srot-control-board"},
-    {"name": "srot-ground-station", "path": "../srot-ground-station"},
-    {"name": "srot-esc-flasher", "path": "../srot-esc-flasher"},
-    {"name": "srot-esc-firmware", "path": "."}
+    {
+      "name": "srot-control-board",
+      "path": "../srot-control-board"
+    },
+    {
+      "name": "srot-ground-station",
+      "path": "../srot-ground-station"
+    },
+    {
+      "name": "srot-esc-flasher",
+      "path": "../srot-esc-flasher"
+    },
+    {
+      "name": "srot-esc-firmware",
+      "path": "."
+    },
+    {
+      "name": "srot-esc-configurator",
+      "path": "../srot-esc-configurator"
+    }
   ],
   "settings": {}
 }
