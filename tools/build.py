@@ -83,8 +83,10 @@ def package(output, records):
     archive = output / ("Compasless-SROT-ESC-v" + version + ".zip")
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         for path in [output/"SHA256SUMS", output/"build-manifest.json",
+                     ROOT/"COPYING", ROOT/"NOTICE",
                      *[output/"hex"/item["filename"] for item in records]]:
-            info = zipfile.ZipInfo(path.relative_to(output).as_posix(), date_time=(2026,11,25,0,0,0))
+            relative = path.name if path.parent == ROOT else path.relative_to(output).as_posix()
+            info = zipfile.ZipInfo(relative, date_time=(2026,11,25,0,0,0))
             info.compress_type=zipfile.ZIP_DEFLATED
             bundle.writestr(info, path.read_bytes())
     print("Source-built firmware package: " + str(archive), flush=True)
