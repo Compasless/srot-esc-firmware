@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/stylesuxx/esc-configurator",
+  "commit": "21b407a3f30aaff1b079496f4d13d82544c667c4",
+  "version": "0.32.1",
+  "license": "AGPL-3.0",
+  "firmware": {
+    "version": "0.4.0",
+    "url": "https://github.com/Compasless/srot-esc-firmware/releases/download/v0.4.0/Compasless-SROT-ESC-v0.4.0.zip",
+    "sha256": "8f833c0ee72594d5aca2d0d8c714133ce6c6150f1d408e1b766bdd135d517452",
+    "source_commit": "b0de285effa00e2010c9559fe23ba9d9d3d453be"
+  },
+  "archive_sha256": "25ee44e12f4b69e63250b35a3653ac2e5e131bbab641c46a6dfbd14d284eedc2"
+}

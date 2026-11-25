@@ -21,6 +21,19 @@ been tested on an ESC or underwater. No measured thrust, efficiency or reversal
 improvement is claimed. The base release reports 3D-mode performance problems;
 that issue remains unresolved. See [compatibility and qualification](docs/COMPATIBILITY.md).
 
+## ESC Configurator
+
+[Open the Compasless configurator](https://compasless-srot-esc-configurator.plainlatte33.chatgpt.site)
+for the existing SROT USB flasher: scan four ESC channels, flash a matching image,
+and read or edit Compasless settings with 3D fixed.
+[Source and local setup](configurator/README.md).
+
+For the public site, download and extract the release ZIP, choose **Flash →
+Select File Locally**, and select the exact matching HEX. Keep **Ignore MCU layout**
+and **Migrate settings** unchecked. Stock local flashing/reflashing is software-tested
+for all 1,008 targets; its settings UI does not recognize Compasless layout 208.
+Use the Compasless interface for settings.
+
 ## Build
 
 On Windows with Python 3.11 or later:

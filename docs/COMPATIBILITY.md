@@ -45,11 +45,22 @@ not add a new thermal protection policy.
 ## Configurator identity
 
 [ESC Configurator identifies firmware families through their NAME](https://github.com/stylesuxx/esc-configurator#adding-new-firmware).
-The stock configurator has no registered Compasless family. It may report an unknown
-firmware or decline configuration after flashing. Full read/configure/reflash
-support for this identity has not been validated. Do not assume that uploading
-a local HEX also guarantees later configuration/recovery through the stock UI.
-The SROT flasher repository's serial passthrough is unchanged.
+The Compasless configurator adds the firmware definition while preserving stock
+serial and flashing checks. It works with the existing SROT USB flasher and exposes
+Compasless settings with the direction field fixed at 3.
+
+The public esc-configurator.com site supports local-file flashing and reflashing
+of all 1,008 release targets in software tests, with force and settings migration
+disabled. It does not expose Compasless settings: 924 targets display BLHeli_S 0.4,
+and the 84 deadtime-120 targets display UNKNOWN. Both remain locally flashable.
+
+The tested public JavaScript asset is main.8a9bda3f.js (checked 2026-11-25). Its
+application sources and layout definitions match pinned ESC Configurator 0.32.1.
+The tests simulate the 4-way wire protocol, flash memory and readback; physical
+hardware qualification remains pending. See configurator/README.md and
+configurator/tests/stock-compatibility-results.json for scope and evidence.
+
+The SROT flasher repository and its passthrough firmware are unchanged.
 
 ## Remaining validation
 
