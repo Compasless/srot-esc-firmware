@@ -51,8 +51,6 @@ No licensed Keil installation is required.
 
 The release ZIP contains separate `SROT_<target>_v0.4.0.hex` images, checksums and
 a source/build manifest. Code starts at [src/SrotEsc.asm](src/SrotEsc.asm).
-[WORKSPACE.md](WORKSPACE.md) explains how the five independent SROT repositories
-are managed from one local workbench.
 
 ## Credits and license
 
