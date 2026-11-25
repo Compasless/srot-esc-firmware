@@ -12,6 +12,7 @@ Open `SROT.code-workspace`, or continue in this folder and expand `repos`.
 | `repos/srot-ground-station/` | `Compasless/srot-ground-station` |
 | `repos/srot-esc-flasher/` | `Compasless/srot-esc-flasher` |
 | `repos/srot-esc-firmware/src/` | `Compasless/srot-esc-firmware` |
+| `repos/srot-esc-configurator/` | `Compasless/srot-esc-configurator` |
 
 From this folder:
 
