@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 — 2026-11-25
+
+- Make 3D the sole compiled motor operating mode.
+- Normalize legacy direction bytes on settings load, decode and save.
+- Remove one-way branches, selectable orientation and turtle-mode handlers.
+- Ignore direction/mode commands 7, 8, 9, 10, 20 and 21.
+- Preserve beep, settings-save, EDT, 3D reversal and signal-loss behavior.
+- Use the 16-byte runtime identity Compasless 3D and revision 0.4.
+- Check compiled policy paths, protected source modules and complete image hashes.
+- Rebuild all separate hardware targets; hardware qualification remains pending.
+- The inherited 3D performance issue is unresolved.
+
 ## 0.3.0 — 2026-11-24
 
 - Compasless runtime firmware identity and revision.

@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -53,18 +53,13 @@ IF MCU_TYPE == MCU_BB2 or MCU_TYPE == MCU_BB51
     mov  Srot_dshot_gcr_start_delay, #DSHOT_TLM_START_DELAY_48
 ENDIF
 
-    mov  C, Flag_Pgm_Dir_Rev            ; Read spin direction setting
-    mov  Flag_Motor_Dir_Rev, C
-
-    jnb  Flag_Pgm_Bidir, Srot_motor_start_bidir_done ; Check if bidirectional operation
-
-    mov  C, Flag_Rcp_Dir_Rev            ; Read force direction
+    mov  C, Flag_Rcp_Dir_Rev            ; Fixed 3D: direction comes only from throttle
     mov  Flag_Motor_Dir_Rev, C          ; Set spinning direction
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 ; Motor start beginning
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
-Srot_motor_start_bidir_done:
+Srot_motor_start_3d:
     ; Set initial motor state
     setb Flag_Startup_Phase             ; Set startup phase flags
     setb Flag_Initial_Run_Phase

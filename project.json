@@ -1,9 +1,9 @@
 {
   "name": "SROT ESC",
   "publisher": "Compasless",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "firmware_entry": "src/SrotEsc.asm",
-  "architecture": "8051/EFM8 assembly; modular reversible AUV thruster firmware",
+  "architecture": "8051/EFM8 assembly; fixed 3D AUV thruster control",
   "source_built": true,
   "hardware_qualified": false
 }

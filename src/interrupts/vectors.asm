@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -218,8 +218,7 @@ Srot_t1_int_dshot_set_cmd:
     mov  Srot_dshot_cmd_cnt, #0
 
 Srot_t1_int_normal_range:
-    ; Check for bidirectional operation (0=stop, 96-2095->fwd, 2096-4095->rev)
-    jnb  Flag_Pgm_Bidir, Srot_t1_int_not_bidir ; If not bidirectional operation - branch
+    ; Fixed 3D operation (0=stop, 96-2095->one half, 2096-4095->opposite half).
 
     ; Subtract 2000 (still 12 bits)
     clr  C
@@ -233,10 +232,6 @@ Srot_t1_int_normal_range:
     mov  Temp5, A
 
 Srot_t1_int_bidir_set:
-    jnb  Flag_Pgm_Dir_Rev, Srot_t1_int_bidir_set_dir ; Check programmed direction
-    cpl  C                              ; Reverse direction
-
-Srot_t1_int_bidir_set_dir:
     mov  Flag_Rcp_Dir_Rev, C            ; Set rcp direction
 
     ; Multiply throttle value by 2
@@ -244,7 +239,7 @@ Srot_t1_int_bidir_set_dir:
     rlca Temp4
     rlca Temp5
 
-Srot_t1_int_not_bidir:
+Srot_t1_int_scale_thrust:
     ; From here Temp5/Temp4 should be at most 3999 (4095-96)
     mov  A, Temp4                       ; Divide by 16 (12 to 8-bit)
     anl  A, #0F0h
@@ -268,11 +263,11 @@ Srot_t1_int_not_bidir:
     mov  A, Temp5
     addc A, #0
     mov  Temp5, A
-    jnb  ACC.3, Srot_t1_int_not_bidir_do_not_boost ; Limit to 11-bit maximum
+    jnb  ACC.3, Srot_t1_int_scale_thrust_done ; Limit to 11-bit maximum
     mov  Temp4, #0FFh
     mov  Temp5, #07h
 
-Srot_t1_int_not_bidir_do_not_boost:
+Srot_t1_int_scale_thrust_done:
     ; Do not boost when changing direction in bidirectional mode
     jb   Flag_Motor_Started, Srot_t1_int_startup_boosted
 

@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -54,15 +54,12 @@ Srot_detect_rcp_level_check_loop:
 ; All following commands need to be received 6 times in a row before action is
 ; taken:
 ;
-;  7: Set motor direction to normal
-;  8: Set motor direction to reverse
-;  9: Disable 3D mode
-; 10: Enable 3D mode
-; 12: Save settings
+; 12: Save settings (fixed 3D field is retained)
 ; 13: Enable EDT (Extended DShot Telemetry)
 ; 14: Disable EDT (Extended DShot Telemetry)
-; 20: Set motor direction to user programmed direction
-; 21: Set motor direction to reversed user programmed direction
+;
+; Legacy direction/mode commands 7, 8, 9, 10, 20 and 21 have no handler.
+; Forward and reverse thrust are selected only by the fixed 3D throttle halves.
 ;
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 Srot_dshot_cmd_check:
@@ -91,39 +88,6 @@ Srot_dshot_cmd_check_count:
     subb A, #6
     jc   Srot_dshot_cmd_exit_no_clear
 
-Srot_dshot_cmd_direction_normal:
-    ; Set motor spinning direction to normal
-    cjne Temp1, #CMD_DIRECTION_NORMAL, Srot_dshot_cmd_direction_reverse
-
-    clr  Flag_Pgm_Dir_Rev
-
-    sjmp Srot_dshot_cmd_exit
-
-Srot_dshot_cmd_direction_reverse:
-    ; Set motor spinning direction to reversed
-    cjne Temp1, #CMD_DIRECTION_REVERSE, Srot_dshot_cmd_direction_bidir_off
-
-    setb Flag_Pgm_Dir_Rev
-
-    sjmp Srot_dshot_cmd_exit
-
-Srot_dshot_cmd_direction_bidir_off:
-    ; Set motor control mode to normal (not bidirectional)
-    cjne Temp1, #CMD_BIDIR_OFF, Srot_dshot_cmd_direction_bidir_on
-
-    ; 9: Set motor control mode to normal (not bidirectional)
-    clr  Flag_Pgm_Bidir
-
-    sjmp Srot_dshot_cmd_exit
-
-Srot_dshot_cmd_direction_bidir_on:
-    ; Set motor control mode to bidirectional
-    cjne Temp1, #CMD_BIDIR_ON, Srot_dshot_cmd_extended_telemetry_enable
-
-    setb Flag_Pgm_Bidir
-
-    sjmp Srot_dshot_cmd_exit
-
 Srot_dshot_cmd_extended_telemetry_enable:
     ; Enable extended telemetry
     cjne Temp1, #CMD_EXTENDED_TELEMETRY_ENABLE, Srot_dshot_cmd_extended_telemetry_disable
@@ -137,7 +101,7 @@ Srot_dshot_cmd_extended_telemetry_enable:
 
 Srot_dshot_cmd_extended_telemetry_disable:
     ; Disable extended telemetry
-    cjne Temp1, #CMD_EXTENDED_TELEMETRY_DISABLE, Srot_dshot_cmd_direction_user_normal
+    cjne Temp1, #CMD_EXTENDED_TELEMETRY_DISABLE, Srot_dshot_cmd_save_settings
 
     mov  Srot_ext_telemetry_l, #0FFh
     mov  Srot_ext_telemetry_h, #0Eh          ; Send state/event 0xff frame to signal telemetry disable
@@ -146,48 +110,8 @@ Srot_dshot_cmd_extended_telemetry_disable:
 
     sjmp Srot_dshot_cmd_exit
 
-Srot_dshot_cmd_direction_user_normal:
-    ; Set motor spinning direction to user programmed direction
-    cjne Temp1, #CMD_DIRECTION_USER_NORMAL, Srot_dshot_cmd_direction_user_reverse
-
-    mov  Temp2, #Srot_pgm_direction          ; Read programmed direction
-    mov  A, @Temp2
-    dec  A
-    mov  C, ACC.0                       ; Set direction
-    mov  Flag_Pgm_Dir_Rev, C
-
-    ; User reverse operation is off (used in turtle mode)
-    clr  Flag_User_Reverse_Requested
-
-    sjmp Srot_dshot_cmd_exit
-
-Srot_dshot_cmd_direction_user_reverse:       ; Temporary reverse
-    ; Set motor spinning direction to reverse of user programmed direction
-    cjne Temp1, #CMD_DIRECTION_USER_REVERSE, Srot_dshot_cmd_save_settings
-
-    mov  Temp2, #Srot_pgm_direction          ; Read programmed direction
-    mov  A, @Temp2
-    dec  A
-    mov  C, ACC.0
-    cpl  C                              ; Set reverse direction
-    mov  Flag_Pgm_Dir_Rev, C
-
-    ; User reverse operation is on (used in turtle mode)
-    setb Flag_User_Reverse_Requested
-
-    sjmp Srot_dshot_cmd_exit
-
 Srot_dshot_cmd_save_settings:
     cjne Temp1, #CMD_SAVE_SETTINGS, Srot_dshot_cmd_exit
-
-    clr  A                              ; Set programmed direction from flags
-    mov  C, Flag_Pgm_Dir_Rev
-    mov  ACC.0, C
-    mov  C, Flag_Pgm_Bidir
-    mov  ACC.1, C
-    inc  A
-    mov  Temp2, #Srot_pgm_direction          ; Store programmed direction
-    mov  @Temp2, A
 
     Unlock_Flash
 

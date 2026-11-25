@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -16,7 +16,7 @@
 DEFAULT_PGM_RPM_POWER_SLOPE EQU 9       ; 0=Off,1..13 (Power limit factor in relation to rpm)
 DEFAULT_PGM_COMM_TIMING EQU 4           ; 1=Low 2=MediumLow 3=Medium 4=MediumHigh 5=High
 DEFAULT_PGM_DEMAG_COMP EQU 2            ; 1=Disabled 2=Low 3=High
-DEFAULT_PGM_DIRECTION EQU 3             ; 1=Normal 2=Reversed 3=Bidir 4=Bidir rev
+SROT_3D_DIRECTION EQU 3                 ; Fixed 3D thrust mapping; no selectable direction modes
 DEFAULT_PGM_BEEP_STRENGTH EQU 40        ; 0..255 (BLHeli_S is 1..255)
 DEFAULT_PGM_BEACON_STRENGTH EQU 80      ; 0..255
 DEFAULT_PGM_BEACON_DELAY EQU 4          ; 1=1m 2=2m 3=5m 4=10m 5=Infinite

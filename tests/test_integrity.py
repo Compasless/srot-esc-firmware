@@ -82,7 +82,7 @@ class TargetTests(unittest.TestCase):
 
     def test_exact_target_and_filename_resolve_to_same_record(self):
         filename, info = select_target("A_H_5_48")
-        self.assertEqual(filename, "SROT_A_H_5_48_v0.3.0.hex")
+        self.assertEqual(filename, "SROT_A_H_5_48_v0.4.0.hex")
         self.assertEqual(select_target(filename), (filename, info))
 
     def test_nonexistent_layout_or_family_is_rejected(self):

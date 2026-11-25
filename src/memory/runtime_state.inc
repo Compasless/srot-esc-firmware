@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -48,8 +48,7 @@ Srot_flags1: DS 1                            ; State flags. Reset upon motor_sta
 
 Srot_flags2: DS 1                            ; State flags. NOT reset upon motor_start
     ; BIT    Flags2.0
-    Flag_Pgm_Dir_Rev BIT Srot_flags2.1       ; Set if the programmed direction is reversed
-    Flag_Pgm_Bidir BIT Srot_flags2.2         ; Set if the programmed control mode is bidirectional operation
+    ; Bits 1 and 2 reserved: legacy mode selectors removed; RAM layout preserved.
     Flag_16ms_Elapsed BIT Srot_flags2.3      ; Set when timer2 interrupt is triggered
     Flag_Ext_Tele BIT Srot_flags2.4          ; Set if Extended DHOT telemetry is enabled
     Flag_Rcp_Stop BIT Srot_flags2.5          ; Set if the RC pulse value is zero or if timeout occurs
@@ -59,7 +58,7 @@ Srot_flags2: DS 1                            ; State flags. NOT reset upon motor
 Srot_flags3: DS 1                            ; State flags. NOT reset upon motor_start
     Flag_Telemetry_Pending BIT Srot_flags3.0 ; DShot telemetry data packet is ready to be sent
     Flag_Had_Signal BIT Srot_flags3.1        ; Used to detect reset after having had a valid signal
-    Flag_User_Reverse_Requested BIT Srot_flags3.2 ; It is set when user request to reverse motors in turtle mode
+    ; Bit 2 reserved: no turtle-mode direction override.
 
 
 Srot_tlm_data_l: DS 1                        ; DShot telemetry data (lo byte)
@@ -139,7 +138,7 @@ Srot_pgm_startup_power_max: DS 1             ; Maximum power (limit) during star
 Srot__pgm_rampup_slope: DS 1                 ;
 Srot_pgm_rpm_power_slope: DS 1               ; Low RPM power protection slope (factor)
 Srot_pgm_pwm_freq: DS 1                      ; PWM frequency (temporary method for display)
-Srot_pgm_direction: DS 1                     ; Rotation direction
+Srot_pgm_direction: DS 1                     ; Fixed 3D compatibility field; always normalized to 3
 Srot__pgm_input_pol: DS 1                    ; Input PWM polarity
 Srot_initialized_l_dummy: DS 1               ; Place holder
 Srot_initialized_h_dummy: DS 1               ; Place holder

@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -69,16 +69,9 @@ Srot_exit_run_mode_is_stall:
     ; Enable all interrupts (disabled above, in exit_run_mode)
     setb IE_EA
 
-    ; Clear extended DSHOT telemetry flag if turtle mode is not active
-    ; This flag is also used for EDT safety arm flag
-    ; We don't want to deactivate extended telemetry during turtle mode
-    ; Extended telemetry flag is important because it is involved in
-    ; EDT safety feature. We don't want to disable EDT arming during
-    ; turtle mode.
-    jb Flag_User_Reverse_Requested, Srot_exit_run_mode_is_stall_beep
-    clr Flag_Ext_Tele
+    ; Restore the normal EDT arming lifecycle after stopping.
+    clr  Flag_Ext_Tele
 
-Srot_exit_run_mode_is_stall_beep:
     ; Stalled too many times
     clr  IE_EA
     call Srot_beep_motor_stalled
@@ -90,16 +83,9 @@ Srot_exit_run_mode_no_stall:
     ; Enable all interrupts (disabled above, in exit_run_mode)
     setb IE_EA
 
-    ; Clear extended DSHOT telemetry flag if turtle mode is not active
-    ; This flag is also used for EDT safety arm flag
-    ; We don't want to deactivate extended telemetry during turtle mode
-    ; Extended telemetry flag is important because it is involved in
-    ; EDT safety feature. We don't want to disable EDT arming during
-    ; turtle mode.
-    jb Flag_User_Reverse_Requested, Srot_exit_run_mode_no_stall_no_beep
-    clr Flag_Ext_Tele
+    ; Restore the normal EDT arming lifecycle after stopping.
+    clr  Flag_Ext_Tele
 
-Srot_exit_run_mode_no_stall_no_beep:
     ; Clear stall counter
     mov  Srot_startup_stall_cnt, #0
 

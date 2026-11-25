@@ -25,18 +25,32 @@ has its own working directory. Compilation uses the active `src/` tree.
 
 Outputs include:
 
-- `hex/SROT_<layout>_<MCU>_<deadtime>_<PWM>_v0.3.0.hex`
+- `hex/SROT_<layout>_<MCU>_<deadtime>_<PWM>_v0.4.0.hex`
 - `SHA256SUMS` and `build-manifest.json`
-- `Compasless-SROT-ESC-v0.3.0.zip`
+- `Compasless-SROT-ESC-v0.4.0.zip`
 - Per-target assembler input, listing and log under `work/`
 
 The manifest records source commit, working-tree state, source/tool hashes,
 toolchain pin, target configuration and flash/file SHA-256 values.
 Release builds must use a clean committed tree.
 
-Before changing identity/defaults, this toolchain compiled all 1,008 original
-targets to byte-for-byte identical flash images. Every Compasless output is checked
-against those independent baseline fingerprints after reversing only the declared
-name, revision and direction changes. Gate-drive code, protection, bootloader,
-layout tags and DShot behavior must still match. HEX length/checksum/EOF checks
-also run; these are software checks, not motor or water testing.
+The assembler was first validated by byte-identical builds of all 1,008 original
+targets. Version 0.4.0 deliberately changes control behavior and instruction
+addresses, so full upstream byte equality is no longer its validation criterion.
+
+The build locks 49 untouched source modules to their previous release hashes,
+including the hardware definitions, gate drivers, commutation timing and protection
+implementation. A validation update is required to change those protected files.
+Approved 0.4.0 image fingerprints detect later byte corruption or unexpected
+compiler output, including changes to bootloader bytes.
+
+For each compiled target, the build also executes the relevant machine-code paths
+using a fail-closed subset of MCS-51 instructions. Checks cover legacy saved values,
+mode commands, settings save, both throttle halves, timeout exit and reversal guards.
+The fixture tests exhaust all 256 saved direction bytes, all 4,000 decoded throttle
+values and legacy command/repeat combinations. Tests inject behavior changes to
+confirm that the execution checks reject them independently of file fingerprints.
+
+The checker is a software model of the exercised instruction subset. It does not
+simulate power electronics, instruction timing, a motor or the physical input link.
+Hardware and water qualification remain pending.

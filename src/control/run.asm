@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -119,10 +119,7 @@ Srot_initial_run_phase:
 
     mov  Srot_initial_run_rot_cntd, A        ; Not zero - store counter
 
-    jnb  Flag_Rcp_Stop, Srot_run1            ; Check if pulse is below stop value
-    jb   Flag_Pgm_Bidir, Srot_run1           ; Check if bidirectional operation
-
-    sjmp Srot_exit_run_mode
+    jmp  Srot_run1                     ; Fixed 3D initial-rotation behavior
 
 Srot_initial_run_phase_done:
     clr  Flag_Initial_Run_Phase         ; Clear initial run phase flag
@@ -144,26 +141,14 @@ Srot_normal_run_checks:
     mov  Srot_startup_stall_cnt, #0
     setb Flag_Motor_Running
 
-    jnb  Flag_Rcp_Stop, Srot_run6_check_bidir ; Check if stop
-    jb   Flag_Pgm_Bidir, Srot_run6_check_timeout ; Check if bidirectional operation
-
-    mov  Temp2, #Srot_pgm_brake_on_stop      ; Check if using brake on stop
-    mov  A, @Temp2
-    jz   Srot_run6_check_timeout
-
-    ; Exit run mode after 100ms when using brake on stop
-    clr  C
-    mov  A, Srot_rcp_stop_cnt                ; Load stop RC pulse counter value
-    subb A, #3                          ; Is number of stop RC pulses above limit?
-    jnc  Srot_exit_run_mode                  ; Yes - exit run mode
+    jnb  Flag_Rcp_Stop, Srot_run6_bidir ; Active 3D thrust: evaluate reversal
 
 Srot_run6_check_timeout:
     ; Exit run mode immediately if timeout
     mov  A, Srot_rcp_timeout_cntd            ; Load RC pulse timeout counter value
     jz   Srot_exit_run_mode                  ; If it is zero - go back to wait for power on
 
-Srot_run6_check_bidir:
-    jb   Flag_Pgm_Bidir, Srot_run6_bidir     ; Check if bidirectional operation
+    jmp  Srot_run6_bidir                ; Only the 3D running path is compiled
 
 Srot_run6_check_speed:
     clr  C

@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -27,7 +27,7 @@ Srot_set_default_parameters:
     imov Temp1, #0FFh                   ; _Pgm_Rampup_Slope
     imov Temp1, #DEFAULT_PGM_RPM_POWER_SLOPE ; Pgm_Rpm_Power_Slope
     imov Temp1, #(24 SHL PWM_FREQ)      ; Pgm_Pwm_Freq
-    imov Temp1, #DEFAULT_PGM_DIRECTION  ; Pgm_Direction
+    imov Temp1, #SROT_3D_DIRECTION      ; Fixed 3D compatibility field
     imov Temp1, #0FFh                   ; _Pgm_Input_Pol
 
     inc  Temp1                          ; Skip Initialized_L_Dummy
@@ -72,14 +72,12 @@ Srot_set_default_parameters:
 ;
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 Srot_decode_settings:
-    mov  Temp1, #Srot_pgm_direction          ; Load programmed direction
-    mov  A, @Temp1
-    dec  A
-    mov  C, ACC.1                       ; Set bidirectional mode
-    mov  Flag_Pgm_Bidir, C
-    mov  C, ACC.0                       ; Set direction (Normal / Reversed)
-    mov  Flag_Pgm_Dir_Rev, C
+    ; Old or externally written direction values never select an operating mode.
+    mov  Temp1, #Srot_pgm_direction
+    mov  @Temp1, #SROT_3D_DIRECTION
+    clr  C                             ; Deterministic carry for the power-limit checks
 
+Srot_decode_protection:
     ; Check startup power
     mov  Temp1, #Srot_pgm_startup_power_max
     mov  A, #80                         ; Limit to at most 80

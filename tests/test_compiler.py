@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 import sys
+import json
 import tempfile
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from asm_frontend import Expression, Frontend
-from build import verify_image
+from build import verify_image, verify_protected_source
+from firmware_checks import check_policy
+from mcs51_check import Machine, listing_symbols
 from srot import ROOT, parse_hex, select_target
 from test_integrity import record, EOF
 
@@ -14,16 +17,16 @@ def encode(memory):
 
 class CompiledFirmwareTests(unittest.TestCase):
     def setUp(self):
-        self.data=(ROOT/"tests/fixtures/SROT_A_H_5_48_v0.3.0.hex").read_bytes()
+        self.data=(ROOT/"tests/fixtures/SROT_A_H_5_48_v0.4.0.hex").read_bytes()
         self.target=select_target("A_H_5_48")[1]
 
-    def test_compiled_fixture_has_only_declared_changes(self):
+    def test_compiled_fixture_matches_verified_3d_image(self):
         self.assertGreater(verify_image(self.data,self.target)["flash_bytes"],5000)
 
     def test_correctly_checksummed_control_code_corruption_is_rejected(self):
         memory=parse_hex(self.data)
         memory[0x100] ^= 1
-        with self.assertRaisesRegex(ValueError,"beyond the declared"):
+        with self.assertRaisesRegex(ValueError,"fingerprint"):
             verify_image(encode(memory),self.target)
 
     def test_wrong_layout_is_rejected(self):
@@ -39,8 +42,53 @@ class CompiledFirmwareTests(unittest.TestCase):
     def test_bootloader_corruption_is_rejected(self):
         memory=parse_hex(self.data)
         memory[max(memory)] ^= 1
-        with self.assertRaisesRegex(ValueError,"beyond the declared"):
+        with self.assertRaisesRegex(ValueError,"fingerprint"):
             verify_image(encode(memory),self.target)
+
+class Fixed3DPolicyTests(unittest.TestCase):
+    def setUp(self):
+        self.memory = parse_hex((ROOT/"tests/fixtures/SROT_A_H_5_48_v0.4.0.hex").read_bytes())
+        self.symbols = json.loads((ROOT/"tests/fixtures/SROT_A_H_5_48_v0.4.0.symbols.json").read_text())
+
+    def test_saved_settings_commands_throttle_halves_and_reversal(self):
+        check_policy(self.memory, self.symbols, exhaustive=True)
+
+    def test_protected_hardware_and_control_modules_match_previous_release(self):
+        verify_protected_source()
+
+    def test_saved_mode_override_is_rejected_by_execution_checks(self):
+        machine = Machine(self.memory, self.symbols)
+        start = machine.address("Srot_decode_settings")
+        self.memory[start + 3] = 1  # Corrupt the normalization immediate to a legacy mode.
+        with self.assertRaisesRegex(ValueError, "retained legacy setting"):
+            check_policy(self.memory, self.symbols)
+
+    def test_corrupted_3d_half_selection_is_rejected_by_execution_checks(self):
+        machine = Machine(self.memory, self.symbols)
+        self.memory[machine.address("Srot_t1_int_normal_range")] = 0xD3  # SETB C replaces CLR C.
+        with self.assertRaisesRegex(ValueError, "throttle"):
+            check_policy(self.memory, self.symbols)
+
+class InstructionSubsetTests(unittest.TestCase):
+    def run_code(self, code):
+        machine = Machine(dict(enumerate(code)), {})
+        machine.run(0)
+        return machine
+
+    def test_borrow_and_carry_are_applied_in_unsigned_subtraction(self):
+        machine = self.run_code([0x74, 0, 0xD3, 0x94, 0, 0x22])
+        self.assertEqual(machine.a, 255)
+        self.assertEqual(machine.carry, 1)
+
+    def test_register_banks_and_indirect_upper_ram_are_separate_from_sfr(self):
+        machine = self.run_code([0x75, 0xD0, 8, 0x78, 0xE0, 0x76, 0x37, 0x74, 0x45, 0x22])
+        self.assertEqual(machine.ram[8], 0xE0)
+        self.assertEqual(machine.ram[0xE0], 0x37)
+        self.assertEqual(machine.a, 0x45)
+
+    def test_unknown_opcode_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported checked opcode"):
+            self.run_code([0xA5])
 
 class FrontendTests(unittest.TestCase):
     def expand(self,text):

@@ -1,7 +1,8 @@
 Compasless SROT ESC firmware
 Modifications Copyright (C) 2026 Compasless contributors
-Modified 2026-11-24: module architecture, namespaced labels, firmware identity,
-firmware revision, bidirectional default and build tooling.
+Modified 2026-11-24 and 2026-11-25: module architecture, namespaced labels,
+Compasless firmware identity, fixed 3D control, legacy-mode removal, persistent
+settings normalization, firmware revision, build tools and compiled policy checks.
 
 Derived from Bluejay v0.21.0:
 https://github.com/bird-sanctuary/bluejay

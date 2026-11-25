@@ -9,6 +9,8 @@ import subprocess
 import zipfile
 from assembler import assemble
 from bootstrap import ARCHIVE_SHA256, ensure_assembler
+from firmware_checks import check_policy
+from mcs51_check import listing_symbols
 from srot import ROOT, assets, image_digest, image_info, parse_hex, save_json, select_target, sha256
 
 def build_plan(target):
@@ -21,48 +23,49 @@ def build_plan(target):
     }
     return filename, record, defines
 
-def verify_image(data, record):
+def verify_contract(data, record):
     memory = parse_hex(data)
     eeprom = 0x3000 if record["mcu"] == "X" else 0x1A00
     def read(address, length):
         return bytes(memory[address + offset] for offset in range(length))
-    if read(eeprom, 3) != bytes([0, 3, 208]):
+    if read(eeprom, 3) != bytes([0, 4, 208]):
         raise ValueError("Firmware revision or EEPROM layout differs")
     if read(eeprom + 11, 1) != b"\x03":
         raise ValueError("Reversible thruster default is missing")
-    if read(eeprom + 0x60, 16) != b"Compasless (.0) ":
+    if read(eeprom + 0x60, 16) != b"Compasless 3D   ":
         raise ValueError("Compasless runtime identity is missing")
     if b"Bluejay" in bytes(memory[address] for address in sorted(memory)):
         raise ValueError("Unexpected upstream runtime identity")
     expected = "#" + record["layout"] + "_" + record["mcu"] + "_" + f'{record["deadtime"]:02d}' + "#"
     if read(eeprom + 0x40, 16).decode("ascii").strip() != expected:
         raise ValueError("Compiled hardware-layout tag does not match selected target")
-    # An independent baseline fingerprint catches compiler and firmware changes
-    # outside this release's declared identity, version and direction changes.
-    baseline = json.loads((ROOT / "tests/fixtures/compiler-baseline.json").read_text())[record["target"]]
-    for address, expected in ((baseline["direction_address"], 3), (baseline["revision_address"], 3)):
-        if memory[address] != expected:
-            raise ValueError("Unexpected runtime default/revision instruction")
-    restored = memory.copy()
-    restored[eeprom + 1] = 21
-    restored[eeprom + 11] = 1
-    restored[baseline["direction_address"]] = 1
-    restored[baseline["revision_address"]] = 21
-    for index, value in enumerate(b"Bluejay (.0)    "):
-        restored[eeprom + 0x60 + index] = value
-    if image_digest(restored) != baseline["image_sha256"]:
-        raise ValueError("Flash changed beyond the declared firmware modifications")
     return image_info(data)
+
+def verify_image(data, record):
+    info = verify_contract(data, record)
+    expected = json.loads((ROOT / "tests/fixtures/firmware-images.json").read_text())[record["target"]]
+    if info["image_sha256"] != expected:
+        raise ValueError("Firmware image differs from the verified 3D release fingerprint")
+    return info
+
+def verify_protected_source():
+    baseline = json.loads((ROOT / "tests/fixtures/protected-source.json").read_text())
+    for relative, digest in baseline["files"].items():
+        if sha256((ROOT / relative).read_bytes()) != digest:
+            raise ValueError("Protected module changed without a validation update: " + relative)
+
 
 def compile_target(target, executable, output):
     filename, record, defines = build_plan(target)
     result = assemble(ROOT / "src", "SrotEsc.asm", defines, executable, output / "work" / target)
     data = result.read_bytes()
     info = verify_image(data, record)
+    symbols = listing_symbols(result.with_suffix(".lst").read_text(encoding="latin-1"))
+    policy = check_policy(parse_hex(data), symbols)
     destination = output / "hex" / filename
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(data)
-    return {"filename":filename, **record, "sha256":sha256(data), **info}
+    return {"filename":filename, **record, "sha256":sha256(data), **info, "policy_checks":policy}
 
 def package(output, records):
     version = json.loads((ROOT / "project.json").read_text())["version"]
@@ -74,14 +77,14 @@ def package(output, records):
     tool_sources = {p.relative_to(ROOT).as_posix():sha256(p.read_bytes()) for p in sorted((ROOT / "tools").glob("*.py"))}
     save_json(output / "build-manifest.json", {
         "firmware":"Compasless SROT ESC", "version":version, "source_built":True,
-        "hardware_qualified":False, "source_commit":commit, "source_dirty":dirty,
+        "hardware_qualified":False, "operating_mode":"3D only", "source_commit":commit, "source_dirty":dirty,
         "source_files":source, "build_tools":tool_sources,
         "assembler":"ASEM-51 1.3", "assembler_archive_sha256":ARCHIVE_SHA256, "targets":records})
     archive = output / ("Compasless-SROT-ESC-v" + version + ".zip")
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         for path in [output/"SHA256SUMS", output/"build-manifest.json",
                      *[output/"hex"/item["filename"] for item in records]]:
-            info = zipfile.ZipInfo(path.relative_to(output).as_posix(), date_time=(2026,11,24,0,0,0))
+            info = zipfile.ZipInfo(path.relative_to(output).as_posix(), date_time=(2026,11,25,0,0,0))
             info.compress_type=zipfile.ZIP_DEFLATED
             bundle.writestr(info, path.read_bytes())
     print("Source-built firmware package: " + str(archive), flush=True)
@@ -104,6 +107,7 @@ def main():
     targets = [args.target] if args.target else [record["target"] for record in assets().values()]
     for target in targets:
         select_target(target)
+    verify_protected_source()
     executable = args.assembler or ensure_assembler()
     if not executable.is_file():
         parser.error("ASEMW.EXE not found")

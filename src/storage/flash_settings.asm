@@ -4,7 +4,7 @@
 ; Copyleft  2022-2023 Daniel Mosquera
 ; Copyright 2020-2022 Mathias Rasmussen
 ; Copyright 2011-2017 Steffen Skaug
-; Modified by Compasless on 2026-11-24; module architecture and AUV defaults.
+; Modified by Compasless on 2026-11-25; fixed 3D thruster operation.
 ; GPL version 3 or later; distributed WITHOUT ANY WARRANTY. See COPYING.
 
 ;
@@ -76,6 +76,9 @@ Srot_read_eeprom_block2:
     mov  DPTR, #Srot_eep_dummy
 
 Srot_read_eeprom_exit:
+    ; Preserve the EEPROM wire layout while ignoring all legacy mode selections.
+    mov  Temp1, #Srot_pgm_direction
+    mov  @Temp1, #SROT_3D_DIRECTION
     ret
 
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
@@ -83,6 +86,9 @@ Srot_read_eeprom_exit:
 ;**** **** **** **** **** **** **** **** **** **** **** **** ****
 Srot_erase_and_store_all_in_eeprom:
     clr  IE_EA                          ; Disable interrupts
+    ; Every settings-write entry point persists the sole supported operating mode.
+    mov  Temp1, #Srot_pgm_direction
+    mov  @Temp1, #SROT_3D_DIRECTION
     call Srot_read_esc_layout
     call Srot_read_melody
     call Srot_erase_flash
